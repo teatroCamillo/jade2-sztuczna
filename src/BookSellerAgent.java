@@ -52,11 +52,18 @@ public class BookSellerAgent extends Agent {
   }
 
   //invoked from GUI, when a new book is added to the catalogue
-  public void updateCatalogue(final String title, final int price) {
+  public void updateCatalogue(final String title, final int price, final int shippingCost) {
     addBehaviour(new OneShotBehaviour() {
       public void action() {
-		catalogue.put(title, new Integer(price));
-		System.out.println(getAID().getLocalName() + ": " + title + " put into the catalogue. Price = " + price);
+		  Integer[] values = new Integer[3];
+		  values[0] = price;
+		  values[1] = shippingCost;
+		  // sum price + shipping cost and replay
+		  values[2] = shippingCost + price;
+
+		catalogue.put(title, values);
+		System.out.println(getAID().getLocalName() + ": " + title + " put into the catalogue. Price = " + price +
+				" Shipping cost: " + shippingCost);
       }
     } );
   }
@@ -69,11 +76,12 @@ public class BookSellerAgent extends Agent {
 	    if (msg != null) {
 	      String title = msg.getContent();
 	      ACLMessage reply = msg.createReply();
-	      Integer price = (Integer) catalogue.get(title);
-	      if (price != null) {
+	      //Integer price = (Integer) catalogue.get(title);
+			Integer[] values = (Integer[])catalogue.get(title);
+	      if (values != null) {
 	        //title found in the catalogue, respond with its price as a proposal
 	        reply.setPerformative(ACLMessage.PROPOSE);
-	        reply.setContent(String.valueOf(price.intValue()));
+	        reply.setContent(String.valueOf(values[2]));
 	      }
 	      else {
 	        //title not found in the catalogue
@@ -97,8 +105,9 @@ public class BookSellerAgent extends Agent {
 	    if (msg != null) {
 	      String title = msg.getContent();
 	      ACLMessage reply = msg.createReply();
-	      Integer price = (Integer) catalogue.remove(title);
-	      if (price != null) {
+	      //Integer price = (Integer) catalogue.remove(title);
+			Integer[] values = (Integer[])catalogue.remove(title);
+	      if (values != null) {
 	        reply.setPerformative(ACLMessage.INFORM);
 	        System.out.println(getAID().getLocalName() + ": " + title + " sold to " + msg.getSender().getLocalName());
 	      }
