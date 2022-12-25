@@ -13,13 +13,16 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 public class BookBuyerAgent extends Agent {
   private BookBuyerGui myGui;
   private String targetBookTitle;
+
+  private Integer budget;
   
   //list of found sellers
   private AID[] sellerAgents;
   
 	protected void setup() {
+		budget = 50;
 	  targetBookTitle = "";
-	  System.out.println("Hello! " + getAID().getLocalName() + " is ready for the purchase order.");
+	  System.out.println("Hello! " + getAID().getLocalName() + " is ready for the purchase order. Budget: " + budget);
 	  myGui = new BookBuyerGui(this);
 	  myGui.display();
 		//time interval for buyer for sending subsequent CFP
@@ -109,7 +112,7 @@ public class BookBuyerAgent extends Agent {
 	      if (reply != null) {
 	        if (reply.getPerformative() == ACLMessage.PROPOSE) {
 	          //proposal received
-	          int price = Integer.parseInt(reply.getContent());
+	          int price = Integer.parseInt(reply.getContent());// it's Total already!
 	          if (bestSeller == null || price < bestPrice) {
 	            //the best proposal as for now
 	            bestPrice = price;
@@ -128,23 +131,32 @@ public class BookBuyerAgent extends Agent {
 	      break;
 	    case 2:
 	      //best proposal consumption - purchase
-	      ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-          order.addReceiver(bestSeller);
-	      order.setContent(targetBookTitle);
-	      order.setConversationId("book-trade");
-	      order.setReplyWith("order"+System.currentTimeMillis());
-	      myAgent.send(order);
-	      mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
-	                               MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-	      step = 3;
-	      break;
+			if(budget >= bestPrice){
+			  ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+			  order.addReceiver(bestSeller);
+			  order.setContent(targetBookTitle);
+			  order.setConversationId("book-trade");
+			  order.setReplyWith("order"+System.currentTimeMillis());
+			  myAgent.send(order);
+			  mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
+									   MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+			  budget -= bestPrice;
+			  step = 3;
+			}
+			else{
+				//buyer doesn't have enough budget
+				step = 4;
+				System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " cannot be bought. Budget: " + budget + " bestPrice: " + bestPrice);
+			}
+			break;
 	    case 3:      
 	      //seller confirms the transaction
 	      reply = myAgent.receive(mt);
 	      if (reply != null) {
 	        if (reply.getPerformative() == ACLMessage.INFORM) {
 	          //purchase succeeded
-	          System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " purchased for " + bestPrice + " from " + reply.getSender().getLocalName());
+	          System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " purchased for " + bestPrice +
+					  " from " + reply.getSender().getLocalName() + " Budget: " + budget);
 		  System.out.println(getAID().getLocalName() + ": waiting for the next purchase order.");
 		  targetBookTitle = "";
 	          //myAgent.doDelete();
