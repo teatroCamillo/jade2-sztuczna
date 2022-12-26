@@ -15,6 +15,8 @@ public class BookBuyerAgent extends Agent {
   private String targetBookTitle;
 
   private Integer budget;
+
+	private int waiter = 0;
   
   //list of found sellers
   private AID[] sellerAgents;
@@ -110,6 +112,7 @@ public class BookBuyerAgent extends Agent {
 	      //collect proposals
 	      ACLMessage reply = myAgent.receive(mt);
 	      if (reply != null) {
+			  //System.out.println(getAID().getLocalName() + ": reply != null C1" );
 	        if (reply.getPerformative() == ACLMessage.PROPOSE) {
 	          //proposal received
 	          int price = Integer.parseInt(reply.getContent());// it's Total already!
@@ -126,7 +129,22 @@ public class BookBuyerAgent extends Agent {
 	        }
 	      }
 	      else {
-	        block();
+			  System.out.println(getAID().getLocalName() + ": waiting for PROPOSE or REFUSE from seller. Waiter: " + waiter);
+			  waiter++;
+			  try {
+				  Thread.sleep(2000);
+			  } catch (InterruptedException e) {
+				  throw new RuntimeException(e);
+			  }
+			  // exit
+			  if(waiter >= 3) {
+				  //System.out.println(getAID().getLocalName() + ": waiting 0 & step 4. " + "Waiter >= 3: " + waiter);
+				  System.out.println(getAID().getLocalName() + ": no one responses. Stop looking.");
+				  targetBookTitle = "";
+				  waiter = 0;
+				  step = 4;
+			  }
+			  //block();
 	      }
 	      break;
 	    case 2:
@@ -175,7 +193,9 @@ public class BookBuyerAgent extends Agent {
 	
 	  public boolean done() {
 	  	if (step == 2 && bestSeller == null) {
-	  		System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " is not on sale.");
+	  		System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " is not on sale or seller doesn't " +
+					"response" +
+					".");
 	  	}
 	    //process terminates here if purchase has failed (title not on sale) or book was successfully bought 
 	    return ((step == 2 && bestSeller == null) || step == 4);

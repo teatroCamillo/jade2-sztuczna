@@ -79,14 +79,23 @@ public class BookSellerAgent extends Agent {
 	      //Integer price = (Integer) catalogue.get(title);
 			Integer[] values = (Integer[])catalogue.get(title);
 	      if (values != null) {
-	        //title found in the catalogue, respond with its price as a proposal
-	        reply.setPerformative(ACLMessage.PROPOSE);
-	        reply.setContent(String.valueOf(values[2]));
+			  //not response simulation
+			  if(true) block();
+			  else {
+				  //title found in the catalogue, respond with its price as a proposal
+				  reply.setPerformative(ACLMessage.PROPOSE);
+				  reply.setContent(String.valueOf(values[2]));
+			  }
 	      }
 	      else {
-	        //title not found in the catalogue
-	        reply.setPerformative(ACLMessage.REFUSE);
-	        reply.setContent("not-available");
+			  //not response simulation
+			if(true) block();
+			else{
+				//title not found in the catalogue
+				  System.out.println(getAID().getLocalName() + "  REFUSE - is not on sale.");
+				reply.setPerformative(ACLMessage.REFUSE);
+				reply.setContent("not-available");
+			}
 	      }
 	      myAgent.send(reply);
 	    }
