@@ -140,7 +140,6 @@ public class BookBuyerAgent extends Agent {
 			  myAgent.send(order);
 			  mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
 									   MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-			  budget -= bestPrice;
 			  step = 3;
 			}
 			else{
@@ -155,6 +154,7 @@ public class BookBuyerAgent extends Agent {
 	      if (reply != null) {
 	        if (reply.getPerformative() == ACLMessage.INFORM) {
 	          //purchase succeeded
+				budget -= bestPrice;
 	          System.out.println(getAID().getLocalName() + ": " + targetBookTitle + " purchased for " + bestPrice +
 					  " from " + reply.getSender().getLocalName() + " Budget: " + budget);
 		  System.out.println(getAID().getLocalName() + ": waiting for the next purchase order.");
